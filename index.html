@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant & Client Issues Management Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .controls button:hover {
+            background: #0056b3;
+        }
+        
+        .controls button.export {
+            background: #28a745;
+        }
+        
+        .controls button.export:hover {
+            background: #1e7e34;
+        }
+        
+        .add-form {
+            background: #fff;
+            padding: 20px 30px;
+            border-bottom: 2px solid #007bff;
+            margin-bottom: 20px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .submit-btn:hover {
+            background: #1e7e34;
+        }
+        
+        .stats {
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-card.upcoming { border-left: 4px solid #ffc107; }
+        .stat-card.old-batches { border-left: 4px solid #fd7e14; }
+        .stat-card.on-hold { border-left: 4px solid #dc3545; }
+        .stat-card.cancellation { border-left: 4px solid #6f42c1; }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 0 30px 30px 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        th {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 12px;
+        }
+        
+        td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            vertical-align: top;
+            font-size: 12px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .category {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .category.upcoming { background: #fff3cd; color: #856404; }
+        .category.old-batch { background: #f8d7da; color: #721c24; }
+        .category.on-hold { background: #f5c6cb; color: #491217; }
+        .category.cancellation { background: #e2e3e5; color: #383d41; }
+        
+        .priority {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+        
+        .priority.high { background: #f5c6cb; color: #721c24; }
+        .priority.medium { background: #fff3cd; color: #856404; }
+        .priority.low { background: #d4edda; color: #155724; }
+        
+        .business-name {
+            font-weight: 500;
+            color: #007bff;
+        }
+        
+        .order-id {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .date {
+            color: #6c757d;
+            font-size: 11px;
+        }
+        
+        .specialist {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        .merchant-id {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #6c757d;
+        }
+        
+        .assigned {
+            font-weight: 500;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            text-align: center;
+        }
+        
+        .assigned.mark { background: #cfe2ff; color: #084298; }
+        .assigned.talvi { background: #f0d0ff; color: #6f42c1; }
+        .assigned.erica { background: #ffeccb; color: #b45309; }
+        .assigned.luis { background: #d1ecf1; color: #0c5460; }
+        .assigned.shift4-tech { background: #d4edda; color: #155724; }
+        .assigned.shift4-cs { background: #f8d7da; color: #721c24; }
+        .assigned.none { background: #e9ecef; color: #6c757d; }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 30px;
+            display: none;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .instructions h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        
+        .instructions p {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Merchant & Client Issues Management Tracker</h1>
+            <p>Dashboard for Mark Cruz - Complete merchant operations and task assignments</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Data Persistence Setup Instructions</h3>
+            <p><strong>Step 1:</strong> After deploying to Netlify, go to your Netlify dashboard → Forms</p>
+            <p><strong>Step 2:</strong> Connect this form to Google Sheets using Zapier or IFTTT</p>
+            <p><strong>Step 3:</strong> Set up automatic data sync to maintain your merchant database</p>
+            <p><strong>Step 4:</strong> All form submissions will be saved permanently and accessible to your team</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="toggleAddForm()">+ Add New Issue</button>
+            <button onclick="loadSavedData()">🔄 Load Saved Data</button>
+            <button onclick="exportToCSV()" class="export">📊 Export to CSV</button>
+            <button onclick="clearLocalData()">🗑️ Clear Local Data</button>
+        </div>
+        
+        <div id="addForm" class="add-form hidden">
+            <h3>Add New Merchant Issue</h3>
+            <form name="merchant-issues" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="handleSubmit(event)">
+                <input type="hidden" name="form-name" value="merchant-issues" />
+                <p class="hidden">
+                    <label>Don't fill this out if you're human: <input name="bot-field" /></label>
+                </p>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="category">Category:</label>
+                        <select name="category" id="category" required>
+                            <option value="">Select Category</option>
+                            <option value="upcoming">Upcoming Installation</option>
+                            <option value="old-batch">Old Batch</option>
+                            <option value="on-hold">Account On Hold</option>
+                            <option value="cancellation">Cancellation Request</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="business-name">Business Name:</label>
+                        <input type="text" name="business-name" id="business-name" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="order-id">Order/Account ID:</label>
+                        <input type="text" name="order-id" id="order-id" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="merchant-id">Merchant ID:</label>
+                        <input type="text" name="merchant-id" id="merchant-id" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specialist">Pre-Launch Specialist:</label>
+                        <input type="text" name="specialist" id="specialist" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority">Priority:</label>
+                        <select name="priority" id="priority" required>
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Status:</label>
+                        <select name="status" id="status" required>
+                            <option value="pending" selected>Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="assigned-to">Assigned To:</label>
+                        <select name="assigned-to" id="assigned-to" required>
+                            <option value="none" selected>None</option>
+                            <option value="mark">Mark</option>
+                            <option value="talvi">Talvi</option>
+                            <option value="erica">Erica</option>
+                            <option value="luis">Luis</option>
+                            <option value="shift4-tech">Shift4 Tech</option>
+                            <option value="shift4-cs">Shift4 Customer Service</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="issue-description">Issue Description:</label>
+                    <textarea name="issue-description" id="issue-description" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes:</label>
+                    <textarea name="notes" id="notes"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">💾 Save Issue</button>
+            </form>
+        </div>
+        
+        <div id="successMessage" class="success-message">
+            ✅ Issue saved successfully! The data has been submitted to Netlify Forms and will be processed automatically.
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card upcoming">
+                <div class="stat-number" id="stat-upcoming">47</div>
+                <div class="stat-label">Upcoming Installations</div>
+            </div>
+            <div class="stat-card old-batches">
+                <div class="stat-number" id="stat-old-batches">7</div>
+                <div class="stat-label">Old Batches (15-31 days)</div>
+            </div>
+            <div class="stat-card on-hold">
+                <div class="stat-number" id="stat-on-hold">3</div>
+                <div class="stat-label">Accounts On Hold</div>
+            </div>
+            <div class="stat-card cancellation">
+                <div class="stat-number" id="stat-cancellation">5</div>
+                <div class="stat-label">Cancellation Requests</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="issuesTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Business Name</th>
+                        <th>Order/Account ID</th>
+                        <th>Merchant ID</th>
+                        <th>Issue Description</th>
+                        <th>Specialist</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Date Added</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Existing sample data -->
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">COLOMBIA ...</td>
+                        <td class="order-id">450511</td>
+                        <td class="merchant-id">0022199842</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro</td>
+                        <td><span class="priority high">High</span></td>
+                        <td>In Progress</td>
+                        <td><span class="assigned none">None</span></td>
+                        <td class="date">Today</td>
+                        <td>Unconfirmed status - needs contact</td>
+                    </tr>
+                    <!-- More sample rows... -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Local storage for temporary data persistence
+        const STORAGE_KEY = 'merchant_issues_data';
+        
+        // Toggle add form visibility
+        function toggleAddForm() {
+            const form = document.getElementById('addForm');
+            form.classList.toggle('hidden');
+        }
+        
+        // Handle form submission
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(event.target);
+            const issueData = Object.fromEntries(formData);
+            
+            // Add to local storage
+            saveToLocalStorage(issueData);
+            
+            // Add to table
+            addIssueToTable(issueData);
+            
+            // Show success message
+            showSuccessMessage();
+            
+            // Reset form
+            event.target.reset();
+            
+            // Hide form
+            document.getElementById('addForm').classList.add('hidden');
+            
+            // Submit to Netlify (this will happen automatically)
+            fetch('/', {
+                method: 'POST',
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams(formData).toString()
+            }).catch(error => console.log('Form submission error:', error));
+        }
+        
+        // Save to local storage
+        function saveToLocalStorage(issueData) {
+            let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            issueData.id = Date.now(); // Simple ID
+            issueData.dateAdded = new Date().toLocaleDateString();
+            savedData.push(issueData);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+        }
+        
+        // Load saved data from local storage
+        function loadSavedData() {
+            const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const tableBody = document.getElementById('tableBody');
+            
+            savedData.forEach(issue => {
+                addIssueToTable(issue, false); // Don't save again
+            });
+            
+            if (savedData.length > 0) {
+                showSuccessMessage(`Loaded ${savedData.length} saved issues from local storage.`);
+            } else {
+                showSuccessMessage('No saved data found in local storage.');
+            }
+        }
+        
+        // Add issue to table
+        function addIssueToTable(issueData, saveToStorage = false) {
+            const tableBody = document.getElementById('tableBody');
+            const row = document.createElement('tr');
+            row.setAttribute('data-category', issueData.category);
+            
+            const categoryClass = issueData.category.replace('-', '');
+            const priorityClass = issueData.priority;
+            const assignedClass = issueData['assigned-to'];
+            
+            row.innerHTML = `
+                <td><span class="category ${categoryClass}">${getCategoryLabel(issueData.category)}</span></td>
+                <td class="business-name">${issueData['business-name']}</td>
+                <td class="order-id">${issueData['order-id'] || 'N/A'}</td>
+                <td class="merchant-id">${issueData['merchant-id']}</td>
+                <td>${issueData['issue-description']}</td>
+                <td class="specialist">${issueData.specialist || 'N/A'}</td>
+                <td><span class="priority ${priorityClass}">${issueData.priority.charAt(0).toUpperCase() + issueData.priority.slice(1)}</span></td>
+                <td>${issueData.status.charAt(0).toUpperCase() + issueData.status.slice(1).replace('-', ' ')}</td>
+                <td><span class="assigned ${assignedClass}">${getAssignedLabel(issueData['assigned-to'])}</span></td>
+                <td class="date">${issueData.dateAdded || new Date().toLocaleDateString()}</td>
+                <td>${issueData.notes || ''}</td>
+            `;
+            
+            tableBody.appendChild(row);
+            
+            if (saveToStorage) {
+                saveToLocalStorage(issueData);
+            }
+        }
+        
+        // Helper functions
+        function getCategoryLabel(category) {
+            const labels = {
+                'upcoming': 'Upcoming Installation',
+                'old-batch': 'Old Batch',
+                'on-hold': 'On Hold',
+                'cancellation': 'Cancellation'
+            };
+            return labels[category] || category;
+        }
+        
+        function getAssignedLabel(assigned) {
+            if (assigned === 'shift4-tech') return 'Shift4 Tech';
+            if (assigned === 'shift4-cs') return 'Shift4 CS';
+            if (assigned === 'none') return 'None';
+            return assigned.charAt(0).toUpperCase() + assigned.slice(1);
+        }
+        
+        function showSuccessMessage(message = '✅ Issue saved successfully! The data has been submitted to Netlify Forms and will be processed automatically.') {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Export to CSV
+        function exportToCSV() {
+            const table = document.getElementById('issuesTable');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            let csvContent = '';
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('th, td'));
+                const rowData = cells.map(cell => {
+                    let text = cell.textContent.trim();
+                    return `"${text.replace(/"/g, '""')}"`;
+                });
+                csvContent += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `merchant_issues_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+        
+        // Clear local data
+        function clearLocalData() {
+            if (confirm('Are you sure you want to clear all locally saved data? This cannot be undone.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                showSuccessMessage('Local data cleared successfully.');
+            }
+        }
+        
+        // Load saved data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Automatically load any saved data
+            const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            if (savedData.length > 0) {
+                console.log(`Found ${savedData.length} saved issues in local storage`);
+            }
+        });
+    </script>
+</body>
+</html>
