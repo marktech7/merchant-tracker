@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant & Client Issues Management Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .controls button:hover {
+            background: #0056b3;
+        }
+        
+        .controls button.export {
+            background: #28a745;
+        }
+        
+        .controls button.export:hover {
+            background: #1e7e34;
+        }
+        
+        .controls select {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .stats {
+            padding: 20px 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-card.upcoming { border-left: 4px solid #ffc107; }
+        .stat-card.old-batches { border-left: 4px solid #fd7e14; }
+        .stat-card.on-hold { border-left: 4px solid #dc3545; }
+        .stat-card.cancellation { border-left: 4px solid #6f42c1; }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            padding: 0 30px 30px 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        th {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 12px 6px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 12px;
+        }
+        
+        td {
+            border: 1px solid #dee2e6;
+            padding: 8px 6px;
+            vertical-align: top;
+            font-size: 12px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+        
+        .category {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .category.upcoming { background: #fff3cd; color: #856404; }
+        .category.old-batch { background: #f8d7da; color: #721c24; }
+        .category.on-hold { background: #f5c6cb; color: #491217; }
+        .category.cancellation { background: #e2e3e5; color: #383d41; }
+        
+        .status select, .assign select {
+            width: 100%;
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .priority {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        .priority.high { color: #dc3545; }
+        .priority.medium { color: #fd7e14; }
+        .priority.low { color: #28a745; }
+        
+        .notes-input {
+            width: 100%;
+            min-height: 35px;
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 11px;
+            resize: vertical;
+        }
+        
+        .business-name {
+            font-weight: 500;
+            color: #007bff;
+        }
+        
+        .order-id {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+        
+        .date {
+            color: #6c757d;
+            font-size: 11px;
+        }
+        
+        .section-header {
+            background: #e9ecef;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .section-header td {
+            padding: 12px;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .specialist {
+            font-size: 11px;
+            color: #6c757d;
+        }
+        
+        .merchant-id {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #6c757d;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-edit {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Merchant & Client Issues Management Tracker</h1>
+            <p>Dashboard for Mark Cruz - Complete merchant operations and task assignments</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="addNewRow()">+ Add New Issue</button>
+            <button onclick="filterTable()">Filter by Status</button>
+            <button onclick="sortTable()">Sort by Priority</button>
+            <button class="export" onclick="exportToCSV()">Export to CSV</button>
+            <select id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+            </select>
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="upcoming">Upcoming Installations</option>
+                <option value="old-batch">Old Batches</option>
+                <option value="on-hold">Accounts On Hold</option>
+                <option value="cancellation">Cancellation Requests</option>
+            </select>
+            <select id="assignedFilter">
+                <option value="all">All Assignments</option>
+                <option value="mark">Mark</option>
+                <option value="talvi">Talvi</option>
+                <option value="erica">Erica</option>
+                <option value="luis">Luis</option>
+                <option value="shift4-tech">Shift4 Tech</option>
+                <option value="shift4-cs">Shift4 Customer Service</option>
+                <option value="none">Unassigned</option>
+            </select>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card upcoming">
+                <div class="stat-number" id="stat-upcoming">47</div>
+                <div class="stat-label">Upcoming Installations</div>
+            </div>
+            <div class="stat-card old-batches">
+                <div class="stat-number" id="stat-old-batches">7</div>
+                <div class="stat-label">Old Batches (15-31 days)</div>
+            </div>
+            <div class="stat-card on-hold">
+                <div class="stat-number" id="stat-on-hold">3</div>
+                <div class="stat-label">Accounts On Hold</div>
+            </div>
+            <div class="stat-card cancellation">
+                <div class="stat-number" id="stat-cancellation">5</div>
+                <div class="stat-label">Cancellation Requests</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="issuesTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Business Name</th>
+                        <th>Order/Account ID</th>
+                        <th>Merchant ID</th>
+                        <th>Issue Description</th>
+                        <th>Pre-Launch Specialist</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Last Updated</th>
+                        <th>Notes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Upcoming Installations Section -->
+                    <tr class="section-header">
+                        <td colspan="12">UPCOMING INSTALLATIONS (47 items found)</td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">COLOMBIA ...</td>
+                        <td class="order-id">450511</td>
+                        <td class="merchant-id">0022199842</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro<br><small>rmontenegro@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes..."></textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">CALIFORITACOS</td>
+                        <td class="order-id">438041</td>
+                        <td class="merchant-id">0022598860</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro<br><small>rmontenegro@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes..."></textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">TACOS OAXACA...</td>
+                        <td class="order-id">398836</td>
+                        <td class="merchant-id">0022180859</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Naima Disla<br><small>Naima.disla@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes..."></textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    
+                    <!-- Old Batches Section -->
+                    <tr class="section-header">
+                        <td colspan="12">OLD BATCHES (7 items found - 15-31 days)</td>
+                    </tr>
+                    <tr data-category="old-batch">
+                        <td><span class="category old-batch">Old Batch</span></td>
+                        <td class="business-name">NANYS NAIL SALON LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022606721</td>
+                        <td>No batches processed within last 15-31 days - needs follow-up</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">May 14, 2025</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">New Account - Last batch: May 14, 2025</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="old-batch">
+                        <td><span class="category old-batch">Old Batch</span></td>
+                        <td class="business-name">COLOMBIAN STYLE BOUTIQUE LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022549103</td>
+                        <td>No batches processed within last 15-31 days - needs follow-up</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">May 18, 2025</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">New Account - Last batch: May 18, 2025</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="old-batch">
+                        <td><span class="category old-batch">Old Batch</span></td>
+                        <td class="business-name">Carnitas Y Chicharr...</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022169316</td>
+                        <td>No batches processed within last 15-31 days - needs follow-up</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">May 19, 2025</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Last batch: May 19, 2025</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="old-batch">
+                        <td><span class="category old-batch">Old Batch</span></td>
+                        <td class="business-name">Franks Grilled Chick...</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022214765</td>
+                        <td>No batches processed within last 15-31 days - needs follow-up</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">May 18, 2025</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Last batch: May 18, 2025</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="old-batch">
+                        <td><span class="category old-batch">Old Batch</span></td>
+                        <td class="business-name">Famous Isaacs Cafe ...</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0021906643</td>
+                        <td>No batches processed within last 15-31 days - needs follow-up</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">May 5, 2025</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Last batch: May 5, 2025</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    
+                    <!-- Accounts On Hold Section -->
+                    <tr class="section-header">
+                        <td colspan="12">ACCOUNTS ON HOLD (3 items found)</td>
+                    </tr>
+                    <tr data-category="on-hold">
+                        <td><span class="category on-hold">On Hold</span></td>
+                        <td class="business-name">TAQUERIA MONARCA</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022648517</td>
+                        <td>Account placed on hold - needs investigation and resolution</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="pending" selected>Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Account requires investigation for hold status</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="on-hold">
+                        <td><span class="category on-hold">On Hold</span></td>
+                        <td class="business-name">TACOS MAGDA</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022622454</td>
+                        <td>Account placed on hold - needs investigation and resolution</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="pending" selected>Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Account requires investigation for hold status</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="on-hold">
+                        <td><span class="category on-hold">On Hold</span></td>
+                        <td class="business-name">M2 RIVERA RESTAURANT LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022586345</td>
+                        <td>Account placed on hold - needs investigation and resolution</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="pending" selected>Pending</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Account requires investigation for hold status</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    
+                    <!-- Cancellation Requests Section -->
+                    <tr class="section-header">
+                        <td colspan="12">CANCELLATION REQUESTS (5 items found)</td>
+                    </tr>
+                    <tr data-category="cancellation">
+                        <td><span class="category cancellation">Cancellation</span></td>
+                        <td class="business-name">RULIS GARAGE</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022497931</td>
+                        <td>Requesting cancellation - needs processing and approval</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Review cancellation request and process</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="cancellation">
+                        <td><span class="category cancellation">Cancellation</span></td>
+                        <td class="business-name">TAQUERIA ANDRADE LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022194538</td>
+                        <td>Requesting cancellation - needs processing and approval</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Review cancellation request and process</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="cancellation">
+                        <td><span class="category cancellation">Cancellation</span></td>
+                        <td class="business-name">IMPERIAL BAR</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022161289</td>
+                        <td>Requesting cancellation - needs processing and approval</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Review cancellation request and process</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="cancellation">
+                        <td><span class="category cancellation">Cancellation</span></td>
+                        <td class="business-name">MOVILENVIOS LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022086551</td>
+                        <td>Requesting cancellation - needs processing and approval</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Review cancellation request and process</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="cancellation">
+                        <td><span class="category cancellation">Cancellation</span></td>
+                        <td class="business-name">ANTOJITOS MI LUZ LLC</td>
+                        <td class="order-id">N/A</td>
+                        <td class="merchant-id">0022022424</td>
+                        <td>Requesting cancellation - needs processing and approval</td>
+                        <td class="specialist">N/A</td>
+                        <td class="priority medium">Medium</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Unknown</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Review cancellation request and process</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Update status function
+        function updateStatus(selectElement) {
+            const row = selectElement.closest('tr');
+            const status = selectElement.value;
+            
+            // Add visual feedback
+            row.style.backgroundColor = status === 'completed' ? '#d4edda' : 
+                                      status === 'pending' ? '#fff3cd' : '#e3f2fd';
+            
+            // Update last updated date
+            const dateCell = row.querySelector('.date');
+            if (dateCell && !dateCell.textContent.includes('Unknown')) {
+                dateCell.textContent = new Date().toLocaleDateString();
+            }
+            
+            updateStats();
+            console.log(`Status updated to: ${status}`);
+        }
+
+        // Update assignment function
+        function updateAssignment(selectElement) {
+            const assignment = selectElement.value;
+            const row = selectElement.closest('tr');
+            
+            // Add visual indicator for assigned tasks
+            if (assignment !== 'none') {
+                selectElement.style.backgroundColor = '#e3f2fd';
+                selectElement.style.fontWeight = 'bold';
+            } else {
+                selectElement.style.backgroundColor = '';
+                selectElement.style.fontWeight = '';
+            }
+            
+            console.log(`Task assigned to: ${assignment}`);
+        }
+
+        // Add new row function
+        function addNewRow() {
+            const table = document.getElementById('issuesTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow(-1);
+            
+            newRow.innerHTML = `
+                <td>
+                    <select class="category-select" onchange="updateCategory(this)">
+                        <option value="upcoming">Upcoming Installation</option>
+                        <option value="old-batch">Old Batch</option>
+                        <option value="on-hold">On Hold</option>
+                        <option value="cancellation">Cancellation</option>
+                    </select>
+                </td>
+                <td><input type="text" placeholder="Business Name" style="width:100%; padding:4px; font-size:11px;"></td>
+                <td><input type="text" placeholder="Order ID" style="width:100%; padding:4px; font-size:11px;"></td>
+                <td><input type="text" placeholder="Merchant ID" style="width:100%; padding:4px; font-size:11px;"></td>
+                <td><input type="text" placeholder="Issue Description" style="width:100%; padding:4px; font-size:11px;"></td>
+                <td><input type="text" placeholder="Specialist" style="width:100%; padding:4px; font-size:11px;"></td>
+                <td>
+                    <select style="width:100%; padding:4px; font-size:11px;">
+                        <option value="high">High</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </td>
+                <td class="status">
+                    <select onchange="updateStatus(this)" style="width:100%; padding:4px; font-size:11px;">
+                        <option value="pending" selected>Pending</option</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Unconfirmed status - needs contact</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">DIANAS ...</td>
+                        <td class="order-id">444555</td>
+                        <td class="merchant-id">0022629202</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro<br><small>rmontenegro@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes...">Awaiting customer confirmation</textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">CANTINA 69 LLC</td>
+                        <td class="order-id">449109</td>
+                        <td class="merchant-id">0022648939</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro<br><small>rmontenegro@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes..."></textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">TACO TACO</td>
+                        <td class="order-id">349929</td>
+                        <td class="merchant-id">0021974922</td>
+                        <td>SkyTab POS System Order - Installation not confirmed</td>
+                        <td class="specialist">Hanna Kim<br><small>hanna.kim@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica">Erica</option>
+                                <option value="luis">Luis</option>
+                                <option value="shift4-tech">Shift4 Tech</option>
+                                <option value="shift4-cs">Shift4 Customer Service</option>
+                            </select>
+                        </td>
+                        <td class="date">Today</td>
+                        <td><textarea class="notes-input" placeholder="Add notes..."></textarea></td>
+                        <td><button class="btn-small btn-edit" onclick="editRow(this)">Edit</button></td>
+                    </tr>
+                    <tr data-category="upcoming">
+                        <td><span class="category upcoming">Upcoming Installation</span></td>
+                        <td class="business-name">NENA MINI ...</td>
+                        <td class="order-id">436261</td>
+                        <td class="merchant-id">0022589794</td>
+                        <td>SkyTab POS System Order_LaunchControl - Installation not confirmed</td>
+                        <td class="specialist">Roberto Montenegro<br><small>rmontenegro@shift4.com</small></td>
+                        <td class="priority high">High</td>
+                        <td class="status">
+                            <select onchange="updateStatus(this)">
+                                <option value="in-progress" selected>In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </td>
+                        <td class="assign">
+                            <select onchange="updateAssignment(this)">
+                                <option value="none" selected>None</option>
+                                <option value="mark">Mark</option>
+                                <option value="talvi">Talvi</option>
+                                <option value="erica
